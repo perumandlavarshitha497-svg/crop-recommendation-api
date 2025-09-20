@@ -41,3 +41,9 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=False)
+try:
+    with open('model.pkl', 'rb') as f:
+        model = pickle.load(f)
+    print("✅ Model loaded successfully.")
+except Exception as e:
+    print(f"❌ Error loading model: {e}")
