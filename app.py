@@ -1,49 +1,43 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
-import numpy as np
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend-backend communication
+CORS(app)  # Enable CORS for frontend access
 
-# Load trained model
+# Load the trained model
 try:
     with open('model.pkl', 'rb') as f:
         model = pickle.load(f)
     print("✅ Model loaded successfully.")
 except Exception as e:
-    print("❌ Error loading model:", e)
-    model = None
+    print(f"❌ Error loading model: {e}")
+
+@app.route('/')
+def home():
+    return "🌱 Crop Recommendation API is running!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if not model:
-        return jsonify({'error': 'Model not available'}), 500
-
     try:
         data = request.get_json()
-        print("📥 Received data:", data)
 
-        # Validate input
-        required_fields = ['N', 'P', 'K', 'temperature', 'humidity', 'rainfall', 'ph']
-        if not all(field in data for field in required_fields):
-            return jsonify({'error': 'Missing one or more required fields'}), 400
-
-        # Convert to float and check for validity
-        try:
-            features = [float(data[field]) for field in required_fields]
-        except ValueError:
-            return jsonify({'error': 'Invalid input: all fields must be numeric'}), 400
+        # Extract features from request
+        features = [
+            data['N'], data['P'], data['K'],
+            data['temperature'], data['humidity'],
+            data['rainfall'], data['ph']
+        ]
 
         # Make prediction
-        prediction = model.predict([features])[0]
-        print("🌿 Predicted crop:", prediction)
+        crop = model.predict([features])[0]
 
-        return jsonify({'crop': prediction})
+        # Return result
+        return jsonify({'crop': crop})
 
     except Exception as e:
-        print("❌ Prediction error:", e)
+        # Return error as JSON instead of HTML
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
