@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend access
@@ -25,12 +26,23 @@ def predict():
 
     try:
         data = request.get_json()
-        features = [
-            data["N"], data["P"], data["K"],
-            data["temperature"], data["humidity"],
-            data["rainfall"], data["ph"]
-        ]
-        prediction = model.predict([features])[0]
+
+        # Format input as DataFrame with correct feature names
+        features = pd.DataFrame([{
+            "N": data["N"],
+            "P": data["P"],
+            "K": data["K"],
+            "temperature": data["temperature"],
+            "humidity": data["humidity"],
+            "rainfall": data["rainfall"],
+            "ph": data["ph"]
+        }])
+
+        # Make prediction
+        prediction = model.predict(features)[0]
         return jsonify({"crop": prediction})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)
