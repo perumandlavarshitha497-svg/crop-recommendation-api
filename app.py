@@ -12,6 +12,7 @@ try:
     print("✅ Model loaded successfully.")
 except Exception as e:
     print(f"❌ Error loading model: {e}")
+    model = None
 
 @app.route('/')
 def home():
@@ -19,31 +20,17 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    if not model:
+        return jsonify({"error": "Model not loaded"}), 500
+
     try:
         data = request.get_json()
-
-        # Extract features from request
         features = [
-            data['N'], data['P'], data['K'],
-            data['temperature'], data['humidity'],
-            data['rainfall'], data['ph']
+            data["N"], data["P"], data["K"],
+            data["temperature"], data["humidity"],
+            data["rainfall"], data["ph"]
         ]
-
-        # Make prediction
-        crop = model.predict([features])[0]
-
-        # Return result
-        return jsonify({'crop': crop})
-
+        prediction = model.predict([features])[0]
+        return jsonify({"crop": prediction})
     except Exception as e:
-        # Return error as JSON instead of HTML
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=False)
-try:
-    with open('model.pkl', 'rb') as f:
-        model = pickle.load(f)
-    print("✅ Model loaded successfully.")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
+        return jsonify({"error": str(e)}), 400

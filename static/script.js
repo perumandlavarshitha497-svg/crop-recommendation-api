@@ -1,48 +1,33 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('cropForm');
-  const resultDiv = document.getElementById('result');
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("cropForm");
+  const resultDiv = document.getElementById("result");
 
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault(); // Prevent form from refreshing the page
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-    // Collect and validate input values
-    const data = {
-      N: parseFloat(document.getElementById('nitrogen').value),
-      P: parseFloat(document.getElementById('phosphorus').value),
-      K: parseFloat(document.getElementById('potassium').value),
-      temperature: parseFloat(document.getElementById('temperature').value),
-      humidity: parseFloat(document.getElementById('humidity').value),
-      rainfall: parseFloat(document.getElementById('rainfall').value),
-      ph: parseFloat(document.getElementById('ph').value)
-    };
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
-    // Check for NaN values (empty or invalid input)
-    if (Object.values(data).some(val => isNaN(val))) {
-      resultDiv.innerText = '⚠️ Please fill in all fields with valid numbers.';
-      return;
-    }
+    // Convert all values to numbers
+    Object.keys(data).forEach(key => {
+      data[key] = parseFloat(data[key]);
+    });
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("https://crop-recommendation-api-ivbw.onrender.com/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        throw new Error("Server error: " + response.status);
       }
 
       const result = await response.json();
-
-      if (result.crop) {
-        resultDiv.innerText = `🌿 Recommended Crop: ${result.crop}`;
-      } else {
-        resultDiv.innerText = '❌ No crop recommendation received.';
-      }
+      resultDiv.textContent = "Recommended Crop: " + result.crop;
     } catch (error) {
-      console.error('Error:', error);
-      resultDiv.innerText = '🚫 Failed to fetch crop recommendation.';
+      resultDiv.textContent = "Error: " + error.message;
     }
   });
 });
